@@ -104,7 +104,6 @@ class PageTwo(tk.Frame):
                                        master=self)
             canvas.draw()
             # placing the canvas on the Tkinter window
-            canvas.get_tk_widget().grid(row=1, column=3, columnspan=2, padx=10, pady=10)
             canvas.get_tk_widget().place(relx=.66, rely=.15)
 
             # fig2
@@ -145,12 +144,10 @@ class PageTwo(tk.Frame):
 
         label = ttk.Label(
             self, text="Creé le signal à traiter", font=LARGE_FONT)
-        label.grid(row=0, column=1, padx=10, pady=10)
         label.place(relx=.4, rely=.1)
 
         button_add_signal = ttk.Button(self, text="add frequency to the signal",
                                        command=add_signal)
-        button_add_signal.grid(row=1, column=0, padx=10, pady=10)
         button_add_signal.place(relx=.1, rely=.3)
 
         entry_amplitude = tk.Entry(self, width=50, bg='white', fg='black')
@@ -173,22 +170,18 @@ class PageTwo(tk.Frame):
 
         button_add_noise = ttk.Button(self, text="add white noise",
                                       command=add_noise)
-        button_add_noise.grid(row=1, column=1, padx=10, pady=10)
         button_add_noise.place(relx=.3, rely=.3)
 
         button1 = ttk.Button(self, text="next",
                              command=lambda: controller.show_frame(PageThree))
-        button1.grid(row=2, column=2, padx=10, pady=10)
         button1.place(relx=.5, rely=.8)
 
         button3 = ttk.Button(self, text="reset signal",
                              command=reset)
-        button3.grid(row=2, column=1, padx=10, pady=10)
         button3.place(relx=.3, rely=.8)
 
         button2 = ttk.Button(self, text="back",
                              command=lambda: controller.show_frame(PageOne))
-        button2.grid(row=2, column=0, padx=10, pady=10)
         button2.place(relx=.1, rely=.8)
 
 
@@ -410,7 +403,7 @@ class PageFive(tk.Frame):
             if(filter1.filter_type == "bandpass" or filter1.filter_type == "bandstop"):
                 filter1.set_fpass([int(entry_fpass.get()), int(
                     entry_fpass2.get())])
-                filter1.set_fstop = ([int(entry_fstop.get()), int(
+                filter1.set_fstop([int(entry_fstop.get()), int(
                     entry_fstop2.get())])
             else:
                 filter1.set_fpass([int(entry_fpass.get())])
@@ -439,15 +432,15 @@ class PageFive(tk.Frame):
         def comboBox_filter_name_click(event):
             # rp
             if(comboBox_filter_name_0.get() == "cheby1" or comboBox_filter_name_0.get() == "ellip"):
-                labelText5.place(relx=.35, rely=.6)
-                entry_rp.place(relx=.5, rely=.6)
+                labelText5.place(relx=.33, rely=.6)
+                entry_rp.place(relx=.51, rely=.6)
             else:
                 labelText5.place_forget()
                 entry_rp.place_forget()
             # rs
             if(comboBox_filter_name_0.get() == "cheby2" or comboBox_filter_name_0.get() == "ellip"):
-                labelText6.place(relx=.35, rely=.65)
-                entry_rs.place(relx=.5, rely=.65)
+                labelText6.place(relx=.33, rely=.65)
+                entry_rs.place(relx=.51, rely=.65)
             else:
                 labelText6.place_forget()
                 entry_rs.place_forget()
@@ -455,10 +448,10 @@ class PageFive(tk.Frame):
 
         def comboBox_filter_type_click(event):
             if(comboBox_filter_type_0.get() == "bandpass" or comboBox_filter_type_0.get() == "bandstop"):
-                labelText3.place(relx=.35, rely=.5)
-                entry_fpass2.place(relx=.5, rely=.5)
-                labelText4.place(relx=.35, rely=.55)
-                entry_fstop2.place(relx=.5, rely=.55)
+                labelText3.place(relx=.33, rely=.5)
+                entry_fpass2.place(relx=.51, rely=.5)
+                labelText4.place(relx=.33, rely=.55)
+                entry_fstop2.place(relx=.51, rely=.55)
             else:
                 labelText3.place_forget()
                 entry_fpass2.place_forget()
@@ -502,13 +495,13 @@ class PageFive(tk.Frame):
 
         entry_fpass2 = tk.Entry(self, width=25, bg='white', fg='black')
         labelText3 = ttk.Label(
-            self, text="Enter pass frequency: ", font=MEDIUM_FONT)
+            self, text="Enter pass frequency 2: ", font=MEDIUM_FONT)
         labelText3.place_forget()
         entry_fpass2.place_forget()
         entry_fstop2 = tk.Entry(
             self, width=25, bg='white', fg='black')
         labelText4 = ttk.Label(
-            self, text="Enter stop frequency: ", font=MEDIUM_FONT)
+            self, text="Enter stop frequency 2: ", font=MEDIUM_FONT)
         labelText4.place_forget()
         entry_fstop2.place_forget()
 
@@ -558,9 +551,79 @@ class PageSix(tk.Frame):
         label = ttk.Label(self, text="Result", font=LARGE_FONT)
         label.pack(pady=10, padx=10)
 
-        button1 = ttk.Button(self, text="Back to Home",
-                             command=lambda: controller.show_frame(StartPage))
-        button1.pack()
+        def plot(t, s1, output):
+            # the figure that will contain the plot
+            fig = Figure(figsize=(4, 3),
+                         dpi=100)
+            # adding the subplot
+            plot1 = fig.add_subplot(111)
+            # plotting the graph
+            plot1.plot(t[:200], s1.sum[:200])
+            # creating the Tkinter canvas
+            # containing the Matplotlib figure
+            canvas = FigureCanvasTkAgg(fig,
+                                       master=self)
+            canvas.draw()
+            # placing the canvas on the Tkinter window
+            canvas.get_tk_widget().place(relx=.2, rely=.15)
+
+            # fig2
+            f_sample = t.size
+            xf = fftfreq(f_sample, 1/f_sample)
+            fft_output2 = (fft(s1.sum))
+            fft_output2 = fft_output2/np.max(fft_output2)
+            fig2 = Figure(figsize=(4, 3),
+                          dpi=100)
+            plot2 = fig2.add_subplot(111)
+            plot2.plot(xf[0:20000], np.abs(fft_output2)[0:20000])
+            canvas = FigureCanvasTkAgg(fig2,
+                                       master=self)
+            canvas.draw()
+            canvas.get_tk_widget().place(relx=.2, rely=.55)
+
+            # fig3
+            # the figure that will contain the plot
+            fig3 = Figure(figsize=(4, 3),
+                          dpi=100)
+            # adding the subplot
+            plot3 = fig.add_subplot(111)
+            # plotting the graph
+            plot3.plot(t[:200], output[:200])
+            # creating the Tkinter canvas
+            # containing the Matplotlib figure
+            canvas = FigureCanvasTkAgg(fig3,
+                                       master=self)
+            canvas.draw()
+            # placing the canvas on the Tkinter window
+            canvas.get_tk_widget().place(relx=.6, rely=.15)
+
+            # fig4
+            fft_output4 = (fft(output))
+            fft_output4 = fft_output4/np.max(fft_output4)
+            fig4 = Figure(figsize=(4, 3),
+                          dpi=100)
+            plot4 = fig4.add_subplot(111)
+            plot4.plot(xf[0:20000], np.abs(fft_output4)[0:20000])
+            canvas = FigureCanvasTkAgg(fig4,
+                                       master=self)
+            canvas.draw()
+            canvas.get_tk_widget().place(relx=.6, rely=.55)
+
+        def plot_result():
+            f_sample = 44000
+            t = np.linspace(0, 1, f_sample)
+            s1 = controller.signal1
+            filter1 = controller.filter1
+            output = filter1.filter_apply(filter1.b, filter1.a, s1.sum)
+            plot(t, s1, output)
+
+        button2 = ttk.Button(self, text="Plot Result",
+                             command=plot_result)
+        button2.place(relx=.5, rely=.8)
+
+        button1 = ttk.Button(self, text="Back",
+                             command=lambda: controller.show_frame(PageThree))
+        button1.place(relx=.1, rely=.8)
 
 
 app = Projet()

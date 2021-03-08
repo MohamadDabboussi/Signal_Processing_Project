@@ -7,7 +7,7 @@ import numpy as np
 
 class My_Filter:
 
-    def __init__(self, filter_name=None, filter_type=None, fpass=None, fstop=None, gpass=None, gstop=None, order=None, Wn=None):
+    def __init__(self, filter_name=None, filter_type=None, fpass=None, fstop=None, gpass=None, gstop=None, order=None, Wn=None, b=None, a=None):
         self.filter_name = filter_name
         self.filter_type = filter_type
         self.order = order
@@ -16,6 +16,8 @@ class My_Filter:
         self.fstop = np.array(fstop)
         self.gpass = gpass
         self.gstop = gstop
+        self.b = b
+        self.a = a
 
     def set_name(self, name):
         self.filter_name = name
@@ -75,12 +77,13 @@ class My_Filter:
         elif (self.filter_name == 'ellip'):
             b, a = signal.ellip(self.order, rp, rs,
                                 self.Wn, self.filter_type, False)
+        self.b = b
+        self.a = a
         return b, a
 
     def filter_apply(self, b, a, s):
-        w, h = signal.freqz(b, a, 512)
         output = signal.filtfilt(b, a, s)
-        return output, w, h
+        return output
 
     def filter_plot_prep(self, b, a):
         w, h = signal.freqz(b, a, 512)
