@@ -23,6 +23,18 @@ class My_Filter:
     def set_type(self, filter_type):
         self.filter_type = filter_type
 
+    def set_fpass(self, fpass):
+        self.fpass = np.array(fpass)
+
+    def set_fstop(self, fstop):
+        self.fstop = np.array(fstop)
+
+    def set_gpass(self, gpass):
+        self.gpass = gpass
+
+    def set_gstop(self, gstop):
+        self.gstop = gstop
+
     def Normalize_Filter(self, frequency_sample):
         self.fpass = self.fpass/(frequency_sample/2)
         self.fstop = self.fstop/(frequency_sample/2)

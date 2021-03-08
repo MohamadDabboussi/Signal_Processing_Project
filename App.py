@@ -74,19 +74,15 @@ class PageOne(tk.Frame):
         label = ttk.Label(
             self, text="Quel signal vous voulez traiter?", font=LARGE_FONT)
         # label.pack(pady=10, padx=10)
-        label.grid(row=0, column=1, padx=10, pady=50)
         label.place(relx=.3, rely=.1)
 
         button1 = ttk.Button(self, text="Signal somme de sinus",
                              command=lambda: controller.show_frame(PageTwo))
-
-        button1.grid(row=1, column=0, padx=10, pady=20, ipady=30, ipadx=30)
-        button1.place(relx=.33, rely=.5, width=150, height=50)
+        button1.place(relx=.25, rely=.5, width=150, height=50)
 
         button2 = ttk.Button(self, text="Signal Audio",
                              command=lambda: controller.show_frame(PageTwo))
-        button2.grid(row=1, column=2, padx=10, pady=20, ipady=30, ipadx=30)
-        button2.place(relx=.66, rely=.5, width=150, height=50)
+        button2.place(relx=.6, rely=.5, width=150, height=50)
 
 
 class PageTwo(tk.Frame):
@@ -137,7 +133,7 @@ class PageTwo(tk.Frame):
             f_sample = 44000
             t = np.linspace(0, 1, f_sample)
             s1 = controller.signal1
-            s1.add_white_noise(2)
+            s1.add_white_noise(int(entry_noise_amplitude.get()))
             plot(t, s1)
 
         def reset():
@@ -159,15 +155,21 @@ class PageTwo(tk.Frame):
 
         entry_amplitude = tk.Entry(self, width=50, bg='white', fg='black')
         labelText = ttk.Label(
-            self, text="Enter amplitude: ", font=MEDIUM_FONT)
+            self, text="Enter signal amplitude: ", font=MEDIUM_FONT)
         labelText.place(relx=.1, rely=.4)
         entry_amplitude.place(relx=.28, rely=.4)
         entry_frequency = tk.Entry(
             self, width=50, bg='white', fg='black')
         labelText2 = ttk.Label(
-            self, text="Enter frequency: ", font=MEDIUM_FONT)
+            self, text="Enter signal frequency: ", font=MEDIUM_FONT)
         labelText2.place(relx=.1, rely=.5)
         entry_frequency.place(relx=.28, rely=.5)
+        entry_noise_amplitude = tk.Entry(
+            self, width=50, bg='white', fg='black')
+        labelText3 = ttk.Label(
+            self, text="Enter noise amplitude: ", font=MEDIUM_FONT)
+        labelText3.place(relx=.1, rely=.6)
+        entry_noise_amplitude.place(relx=.28, rely=.6)
 
         button_add_noise = ttk.Button(self, text="add white noise",
                                       command=add_noise)
@@ -206,6 +208,10 @@ class PageThree(tk.Frame):
         button2 = ttk.Button(self, text="No",
                              command=lambda: controller.show_frame(PageFive))
         button2.place(relx=.6, rely=.5, width=100, height=50)
+
+        button3 = ttk.Button(self, text="Back",
+                             command=lambda: controller.show_frame(PageTwo))
+        button3.place(relx=.1, rely=.8)
 
 
 class PageFour(tk.Frame):
@@ -256,14 +262,14 @@ class PageFour(tk.Frame):
                 Wn = [int(entry_cutoff_frequency.get())]
             filter1.filter_design(order, Wn, f_sample)
             if(comboBox_filter_name_0.get() == "cheby1"):
-                rp = int(entry_rp.get())
+                rp = float(entry_rp.get())
                 b2, a2 = filter1.filter_create(rp=rp)
             elif(comboBox_filter_name_0.get() == "cheby2"):
-                rs = int(entry_rs.get())
+                rs = float(entry_rs.get())
                 b2, a2 = filter1.filter_create(rs=rs)
             elif(comboBox_filter_name_0.get() == "ellip"):
-                rp = int(entry_rp.get())
-                rs = int(entry_rs.get())
+                rp = float(entry_rp.get())
+                rs = float(entry_rs.get())
                 b2, a2 = filter1.filter_create(rp=rp, rs=rs)
             else:
                 b2, a2 = filter1.filter_create()
@@ -275,7 +281,7 @@ class PageFour(tk.Frame):
             # rp
             if(comboBox_filter_name_0.get() == "cheby1" or comboBox_filter_name_0.get() == "ellip"):
                 labelText4.place(relx=.35, rely=.6)
-                entry_rp.place(relx=.43, rely=.6, width=100)
+                entry_rp.place(relx=.52, rely=.6, width=100)
             else:
                 labelText4.place_forget()
                 entry_rp.place_forget()
@@ -283,7 +289,7 @@ class PageFour(tk.Frame):
             # rs
             if(comboBox_filter_name_0.get() == "cheby2" or comboBox_filter_name_0.get() == "ellip"):
                 labelText5.place(relx=.35, rely=.7)
-                entry_rs.place(relx=.43, rely=.7, width=100)
+                entry_rs.place(relx=.52, rely=.7, width=100)
             else:
                 labelText5.place_forget()
                 entry_rs.place_forget()
@@ -367,6 +373,68 @@ class PageFive(tk.Frame):
 
         label = ttk.Label(self, text="Design Filter", font=LARGE_FONT)
         label.pack(pady=10, padx=10)
+
+        def plot(f_sample, w2, h2, Wn):
+            # the figure that will contain the plot
+            fig = Figure(figsize=(4, 3),
+                         dpi=100)
+            # adding the subplot
+            plot1 = fig.add_subplot(111)
+            # plotting the graph
+            plot1.semilogx(w2*f_sample/(2*math.pi), 20*np.log10(abs(h2)))
+            plot1.set_xscale('log')
+            plot1.title.set_text('Butterworth filter frequency response')
+            plot1.set_xlabel('Frequency [Hz]')
+            plot1.set_ylabel('Amplitude [dB]')
+            plot1.margins(0, 0.1)
+            plot1.grid(which='both', axis='both')
+            if(Wn.size > 1):
+                plot1.axvline(Wn[0]*f_sample/2, color='green')
+                plot1.axvline(Wn[1]*f_sample/2, color='green')
+            else:
+                plot1.axvline(Wn*f_sample/2, color='green')
+            # creating the Tkinter canvas
+            # containing the Matplotlib figure
+            canvas = FigureCanvasTkAgg(fig,
+                                       master=self)
+            canvas.draw()
+            # placing the canvas on the Tkinter window
+            canvas.get_tk_widget().place(relx=.66, rely=.3)
+
+        def design_filter():
+            filter1 = controller.filter1
+            filter1.set_name(comboBox_filter_name_0.get())
+            filter1.set_type(comboBox_filter_type_0.get())
+            filter1.set_gpass(float(entry_gpass.get()))
+            filter1.set_gstop(float(entry_gstop.get()))
+            if(filter1.filter_type == "bandpass" or filter1.filter_type == "bandstop"):
+                filter1.set_fpass([int(entry_fpass.get()), int(
+                    entry_fpass2.get())])
+                filter1.set_fstop = ([int(entry_fstop.get()), int(
+                    entry_fstop2.get())])
+            else:
+                filter1.set_fpass([int(entry_fpass.get())])
+                filter1.set_fstop([int(entry_fstop.get())])
+            f_sample = 44000
+            Td = 1
+            filter1.Normalize_Filter(f_sample)
+            filter1.PreWarping_Filter(Td)
+            filter1.filter_design()
+            if(comboBox_filter_name_0.get() == "cheby1"):
+                rp = float(entry_rp.get())
+                b2, a2 = filter1.filter_create(rp=rp)
+            elif(comboBox_filter_name_0.get() == "cheby2"):
+                rs = float(entry_rs.get())
+                b2, a2 = filter1.filter_create(rs=rs)
+            elif(comboBox_filter_name_0.get() == "ellip"):
+                rp = float(entry_rp.get())
+                rs = float(entry_rs.get())
+                b2, a2 = filter1.filter_create(rp=rp, rs=rs)
+            else:
+                b2, a2 = filter1.filter_create()
+            w2, h2 = filter1.filter_plot_prep(b2, a2)
+            Wn = filter1.Wn
+            plot(f_sample, w2, h2, Wn)
 
         def comboBox_filter_name_click(event):
             # rp
@@ -470,7 +538,7 @@ class PageFive(tk.Frame):
         labelText6.place_forget()
         entry_rs.place_forget()
 
-        button_create_filter = ttk.Button(self, text="Create Filter",
+        button_create_filter = ttk.Button(self, text="Design Filter",
                                           command=design_filter)
         button_create_filter.place(relx=.3, rely=.8)
 
@@ -496,6 +564,7 @@ class PageSix(tk.Frame):
 
 
 app = Projet()
+app.iconbitmap('ulfg_logo.ico')
 app.resizable(False, False)
 app.tk_setPalette('black')
 app.mainloop()
