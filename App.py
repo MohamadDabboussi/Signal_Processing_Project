@@ -300,22 +300,6 @@ class PageFour(tk.Frame):
         filter_names = ["butter", "cheby1", "cheby2", "ellip"]
         filter_types = ["low", "high", "bandpass", "bandstop"]
 
-        # self.option_add("*TCombobox*Listbox*Background", 'green')
-        # self.option_add("*TCombobox*Listbox*selectedbackground", 'green')
-        # self.option_add("*TCombobox*Listbox*foreground", 'black')
-
-        # c = ttk.Combobox(
-        #     self, value=filter_names, state='readonly')
-        # c.current(0)
-        # c.bind("<<ComboboxSelected>>", comboBox_filter_name_click)
-        # c.place(relx=.15, rely=.2, width=100, height=30)
-
-        # c2 = ttk.Combobox(
-        #     self, value=filter_types, state='readonly')
-        # c2.current(0)
-        # c2.bind("<<ComboboxSelected>>", comboBox_filter_type_click)
-        # c2.place(relx=.3, rely=.2, width=100, height=30)
-
         comboBox_filter_name_0 = tk.StringVar()
         comboBox_filter_name_0.set(filter_names[0])
         comboBox_filter_name = tk.OptionMenu(
@@ -353,14 +337,14 @@ class PageFour(tk.Frame):
         entry_rp = tk.Entry(
             self, width=50, bg='white', fg='black')
         labelText4 = ttk.Label(
-            self, text="Enter rp: ", font=MEDIUM_FONT)
+            self, text="Enter max attenuation: ", font=MEDIUM_FONT)
         labelText4.place_forget()
         entry_rp.place_forget()
 
         entry_rs = tk.Entry(
             self, width=50, bg='white', fg='black')
         labelText5 = ttk.Label(
-            self, text="Enter rs: ", font=MEDIUM_FONT)
+            self, text="Enter min attenuation: ", font=MEDIUM_FONT)
         labelText5.place_forget()
         entry_rs.place_forget()
 
@@ -384,6 +368,35 @@ class PageFive(tk.Frame):
         label = ttk.Label(self, text="Design Filter", font=LARGE_FONT)
         label.pack(pady=10, padx=10)
 
+        def comboBox_filter_name_click(event):
+            # rp
+            if(comboBox_filter_name_0.get() == "cheby1" or comboBox_filter_name_0.get() == "ellip"):
+                labelText5.place(relx=.35, rely=.6)
+                entry_rp.place(relx=.5, rely=.6)
+            else:
+                labelText5.place_forget()
+                entry_rp.place_forget()
+            # rs
+            if(comboBox_filter_name_0.get() == "cheby2" or comboBox_filter_name_0.get() == "ellip"):
+                labelText6.place(relx=.35, rely=.65)
+                entry_rs.place(relx=.5, rely=.65)
+            else:
+                labelText6.place_forget()
+                entry_rs.place_forget()
+            return
+
+        def comboBox_filter_type_click(event):
+            if(comboBox_filter_type_0.get() == "bandpass" or comboBox_filter_type_0.get() == "bandstop"):
+                labelText3.place(relx=.35, rely=.5)
+                entry_fpass2.place(relx=.5, rely=.5)
+                labelText4.place(relx=.35, rely=.55)
+                entry_fstop2.place(relx=.5, rely=.55)
+            else:
+                labelText3.place_forget()
+                entry_fpass2.place_forget()
+                labelText4.place_forget()
+                entry_fstop2.place_forget()
+
         filter_names = ["butter", "cheby1", "cheby2", "ellip"]
         filter_types = ["low", "high", "bandpass", "bandstop"]
 
@@ -393,7 +406,7 @@ class PageFive(tk.Frame):
         comboBox_filter_name_0 = tk.StringVar()
         comboBox_filter_name_0.set(filter_names[0])
         comboBox_filter_name = tk.OptionMenu(
-            self, comboBox_filter_name_0, *filter_names)
+            self, comboBox_filter_name_0, *filter_names, command=comboBox_filter_name_click)
         comboBox_filter_name.place(relx=.15, rely=.3, width=100, height=30)
         comboBox_filter_name["borderwidth"] = 0
 
@@ -403,7 +416,7 @@ class PageFive(tk.Frame):
         comboBox_filter_type_0 = tk.StringVar()
         comboBox_filter_type_0.set(filter_types[0])
         comboBox_filter_type = tk.OptionMenu(
-            self, comboBox_filter_type_0, *filter_types)
+            self, comboBox_filter_type_0, *filter_types, command=comboBox_filter_type_click)
         comboBox_filter_type.place(relx=.3, rely=.3, width=100, height=30)
         comboBox_filter_type["borderwidth"] = 0
 
@@ -422,26 +435,44 @@ class PageFive(tk.Frame):
         entry_fpass2 = tk.Entry(self, width=25, bg='white', fg='black')
         labelText3 = ttk.Label(
             self, text="Enter pass frequency: ", font=MEDIUM_FONT)
-        labelText3.place(relx=.35, rely=.5)
-        entry_fpass2.place(relx=.5, rely=.5)
+        labelText3.place_forget()
+        entry_fpass2.place_forget()
         entry_fstop2 = tk.Entry(
             self, width=25, bg='white', fg='black')
         labelText4 = ttk.Label(
             self, text="Enter stop frequency: ", font=MEDIUM_FONT)
-        labelText4.place(relx=.35, rely=.55)
-        entry_fstop2.place(relx=.5, rely=.55)
+        labelText4.place_forget()
+        entry_fstop2.place_forget()
 
-        entry_gpass = tk.Entry(self, width=50, bg='white', fg='black')
+        entry_gpass = tk.Entry(self, width=25, bg='white', fg='black')
         labelText = ttk.Label(
             self, text="Enter pass attenuation: ", font=MEDIUM_FONT)
-        labelText.place(relx=.05, rely=.6)
+        labelText.place(relx=.04, rely=.6)
         entry_gpass.place(relx=.2, rely=.6)
         entry_gstop = tk.Entry(
-            self, width=50, bg='white', fg='black')
+            self, width=25, bg='white', fg='black')
         labelText2 = ttk.Label(
             self, text="Enter stop attenuation: ", font=MEDIUM_FONT)
-        labelText2.place(relx=.05, rely=.65)
+        labelText2.place(relx=.04, rely=.65)
         entry_gstop.place(relx=.2, rely=.65)
+
+        entry_rp = tk.Entry(
+            self, width=25, bg='white', fg='black')
+        labelText5 = ttk.Label(
+            self, text="Enter max attenuation: ", font=MEDIUM_FONT)
+        labelText5.place_forget()
+        entry_rp.place_forget()
+
+        entry_rs = tk.Entry(
+            self, width=25, bg='white', fg='black')
+        labelText6 = ttk.Label(
+            self, text="Enter min attenuation: ", font=MEDIUM_FONT)
+        labelText6.place_forget()
+        entry_rs.place_forget()
+
+        button_create_filter = ttk.Button(self, text="Create Filter",
+                                          command=design_filter)
+        button_create_filter.place(relx=.3, rely=.8)
 
         button1 = ttk.Button(self, text="Back",
                              command=lambda: controller.show_frame(PageThree))
