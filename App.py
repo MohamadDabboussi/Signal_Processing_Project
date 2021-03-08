@@ -255,7 +255,18 @@ class PageFour(tk.Frame):
             else:
                 Wn = [int(entry_cutoff_frequency.get())]
             filter1.filter_design(order, Wn, f_sample)
-            b2, a2 = filter1.filter_create(rs=40)
+            if(comboBox_filter_name_0.get() == "cheby1"):
+                rp = int(entry_rp.get())
+                b2, a2 = filter1.filter_create(rp=rp)
+            elif(comboBox_filter_name_0.get() == "cheby2"):
+                rs = int(entry_rs.get())
+                b2, a2 = filter1.filter_create(rs=rs)
+            elif(comboBox_filter_name_0.get() == "ellip"):
+                rp = int(entry_rp.get())
+                rs = int(entry_rs.get())
+                b2, a2 = filter1.filter_create(rp=rp, rs=rs)
+            else:
+                b2, a2 = filter1.filter_create()
             w2, h2 = filter1.filter_plot_prep(b2, a2)
             Wn = filter1.Wn
             plot(f_sample, w2, h2, Wn)
