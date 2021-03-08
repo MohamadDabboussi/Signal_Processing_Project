@@ -148,7 +148,7 @@ class PageTwo(tk.Frame):
 
         button_add_signal = ttk.Button(self, text="add frequency to the signal",
                                        command=add_signal)
-        button_add_signal.place(relx=.1, rely=.3)
+        button_add_signal.place(relx=.1, rely=.3, width=200, height=30)
 
         entry_amplitude = tk.Entry(self, width=50, bg='white', fg='black')
         labelText = ttk.Label(
@@ -170,7 +170,7 @@ class PageTwo(tk.Frame):
 
         button_add_noise = ttk.Button(self, text="add white noise",
                                       command=add_noise)
-        button_add_noise.place(relx=.3, rely=.3)
+        button_add_noise.place(relx=.3, rely=.3, width=150, height=30)
 
         button1 = ttk.Button(self, text="next",
                              command=lambda: controller.show_frame(PageThree))
@@ -549,11 +549,17 @@ class PageSix(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         label = ttk.Label(self, text="Result", font=LARGE_FONT)
-        label.pack(pady=10, padx=10)
+        label.place(relx=.45, rely=.05)
+
+        label_before = ttk.Label(self, text="Before", font=MEDIUM_FONT)
+        label_before.place(relx=.2, rely=.1)
+
+        label_after = ttk.Label(self, text="After", font=MEDIUM_FONT)
+        label_after.place(relx=.6, rely=.1)
 
         def plot(t, s1, output):
             # the figure that will contain the plot
-            fig = Figure(figsize=(4, 3),
+            fig = Figure(figsize=(3, 3),
                          dpi=100)
             # adding the subplot
             plot1 = fig.add_subplot(111)
@@ -572,7 +578,7 @@ class PageSix(tk.Frame):
             xf = fftfreq(f_sample, 1/f_sample)
             fft_output2 = (fft(s1.sum))
             fft_output2 = fft_output2/np.max(fft_output2)
-            fig2 = Figure(figsize=(4, 3),
+            fig2 = Figure(figsize=(3, 3),
                           dpi=100)
             plot2 = fig2.add_subplot(111)
             plot2.plot(xf[0:20000], np.abs(fft_output2)[0:20000])
@@ -583,10 +589,10 @@ class PageSix(tk.Frame):
 
             # fig3
             # the figure that will contain the plot
-            fig3 = Figure(figsize=(4, 3),
+            fig3 = Figure(figsize=(3, 3),
                           dpi=100)
             # adding the subplot
-            plot3 = fig.add_subplot(111)
+            plot3 = fig3.add_subplot(111)
             # plotting the graph
             plot3.plot(t[:200], output[:200])
             # creating the Tkinter canvas
@@ -600,7 +606,7 @@ class PageSix(tk.Frame):
             # fig4
             fft_output4 = (fft(output))
             fft_output4 = fft_output4/np.max(fft_output4)
-            fig4 = Figure(figsize=(4, 3),
+            fig4 = Figure(figsize=(3, 3),
                           dpi=100)
             plot4 = fig4.add_subplot(111)
             plot4.plot(xf[0:20000], np.abs(fft_output4)[0:20000])
@@ -619,11 +625,11 @@ class PageSix(tk.Frame):
 
         button2 = ttk.Button(self, text="Plot Result",
                              command=plot_result)
-        button2.place(relx=.5, rely=.8)
+        button2.place(relx=.44, rely=.5, width=100, height=30)
 
         button1 = ttk.Button(self, text="Back",
                              command=lambda: controller.show_frame(PageThree))
-        button1.place(relx=.1, rely=.8)
+        button1.place(relx=.1, rely=.94)
 
 
 app = Projet()
