@@ -575,7 +575,10 @@ class PageSix(tk.Frame):
             # adding the subplot
             plot1 = fig.add_subplot(111)
             # plotting the graph
-            plot1.plot(t[:300], s1.sum[:300])
+            if controller.is_audio == False:
+                plot1.plot(t[:300], s1.sum[:300])
+            else:
+                plot1.plot(t, s1.sum)
             # creating the Tkinter canvas
             # containing the Matplotlib figure
             canvas = FigureCanvasTkAgg(fig,
@@ -586,7 +589,7 @@ class PageSix(tk.Frame):
 
             # fig2
             f_sample = t.size
-            xf = fftfreq(f_sample, 1/f_sample)
+            xf = fftfreq(f_sample, 1)
             fft_output2 = (fft(s1.sum))
             fft_output2 = fft_output2/np.max(fft_output2)
             fig2 = Figure(figsize=(3, 3),
@@ -608,7 +611,10 @@ class PageSix(tk.Frame):
             # adding the subplot
             plot3 = fig3.add_subplot(111)
             # plotting the graph
-            plot3.plot(t[:300], output[:300])
+            if controller.is_audio == False:
+                plot3.plot(t[:300], output[:300])
+            else:
+                plot3.plot(t, output)
             # creating the Tkinter canvas
             # containing the Matplotlib figure
             canvas = FigureCanvasTkAgg(fig3,
@@ -643,9 +649,9 @@ class PageSix(tk.Frame):
             filter1 = controller.filter1
             output = filter1.filter_apply(filter1.b, filter1.a, s1.sum)
             plot(t, s1, output)
-            # if controller.is_audio == True:
-            #     fs, data = wavfile.read('./audio/test.wav')
-            #     sd.play(output, fs)
+            if controller.is_audio == True:
+                fs, data = wavfile.read('./audio/test.wav')
+                sd.play(output, fs)
 
         button2 = ttk.Button(self, text="Plot Result",
                              command=plot_result)
