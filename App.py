@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft, fftfreq, fftshift
 import math
 import numpy as np
+import sounddevice as sd
+from scipy.io import wavfile
 
 LARGE_FONT = ("Verdana", 20)
 MEDIUM_FONT = ("Verdana", 12)
@@ -31,10 +33,11 @@ class Projet(tk.Tk):
 
         self.signal1 = My_Signal()
         self.filter1 = My_Filter()
+        self.is_audio = False
 
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTwo, PageThree, PageFour, PageFive, PageSix):
+        for F in (StartPage, PageOne, PageTwo, PageThree, PageFour, PageFive, PageSix, PageTen):
 
             frame = F(container, self)
             self.frames[F] = frame
@@ -71,17 +74,25 @@ class PageOne(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
+        def two():
+            controller.is_audio = False
+            controller.show_frame(PageTwo)
+
+        def ten():
+            controller.is_audio = True
+            controller.show_frame(PageTen)
+
         label = ttk.Label(
             self, text="Quel signal vous voulez traiter?", font=LARGE_FONT)
         # label.pack(pady=10, padx=10)
         label.place(relx=.3, rely=.1)
 
         button1 = ttk.Button(self, text="Signal somme de sinus",
-                             command=lambda: controller.show_frame(PageTwo))
+                             command=two)
         button1.place(relx=.25, rely=.5, width=150, height=50)
 
         button2 = ttk.Button(self, text="Signal Audio",
-                             command=lambda: controller.show_frame(PageTen))
+                             command=ten)
         button2.place(relx=.6, rely=.5, width=150, height=50)
 
 
@@ -146,7 +157,7 @@ class PageTwo(tk.Frame):
             self, text="Creé le signal à traiter", font=LARGE_FONT)
         label.place(relx=.4, rely=.1)
 
-        button_add_signal = ttk.Button(self, text="add frequency to the signal",
+        button_add_signal = ttk.Button(self, text="Add frequency to the signal",
                                        command=add_signal)
         button_add_signal.place(relx=.1, rely=.3, width=200, height=30)
 
@@ -168,7 +179,7 @@ class PageTwo(tk.Frame):
         labelText3.place(relx=.1, rely=.6)
         entry_noise_amplitude.place(relx=.28, rely=.6)
 
-        button_add_noise = ttk.Button(self, text="add white noise",
+        button_add_noise = ttk.Button(self, text="Add white noise",
                                       command=add_noise)
         button_add_noise.place(relx=.3, rely=.3, width=150, height=30)
 
@@ -564,7 +575,7 @@ class PageSix(tk.Frame):
             # adding the subplot
             plot1 = fig.add_subplot(111)
             # plotting the graph
-            plot1.plot(t[:200], s1.sum[:200])
+            plot1.plot(t[:300], s1.sum[:300])
             # creating the Tkinter canvas
             # containing the Matplotlib figure
             canvas = FigureCanvasTkAgg(fig,
@@ -581,7 +592,10 @@ class PageSix(tk.Frame):
             fig2 = Figure(figsize=(3, 3),
                           dpi=100)
             plot2 = fig2.add_subplot(111)
-            plot2.plot(xf[0:20000], np.abs(fft_output2)[0:20000])
+            if controller.is_audio == False:
+                plot2.plot(xf[0:20000], np.abs(fft_output2)[0:20000])
+            else:
+                plot2.plot(xf, np.abs(fft_output2))
             canvas = FigureCanvasTkAgg(fig2,
                                        master=self)
             canvas.draw()
@@ -594,7 +608,7 @@ class PageSix(tk.Frame):
             # adding the subplot
             plot3 = fig3.add_subplot(111)
             # plotting the graph
-            plot3.plot(t[:200], output[:200])
+            plot3.plot(t[:300], output[:300])
             # creating the Tkinter canvas
             # containing the Matplotlib figure
             canvas = FigureCanvasTkAgg(fig3,
@@ -609,19 +623,29 @@ class PageSix(tk.Frame):
             fig4 = Figure(figsize=(3, 3),
                           dpi=100)
             plot4 = fig4.add_subplot(111)
-            plot4.plot(xf[0:20000], np.abs(fft_output4)[0:20000])
+            if controller.is_audio == False:
+                plot4.plot(xf[0:20000], np.abs(fft_output4)[0:20000])
+            else:
+                plot4.plot(xf, np.abs(fft_output4))
             canvas = FigureCanvasTkAgg(fig4,
                                        master=self)
             canvas.draw()
             canvas.get_tk_widget().place(relx=.6, rely=.55)
 
         def plot_result():
-            f_sample = 44000
-            t = np.linspace(0, 1, f_sample)
+            if controller.is_audio == False:
+                f_sample = 44000
+                t = np.linspace(0, 1, f_sample)
+            else:
+                f_sample = 44000
+                t = np.linspace(0, 5, 266240)
             s1 = controller.signal1
             filter1 = controller.filter1
             output = filter1.filter_apply(filter1.b, filter1.a, s1.sum)
             plot(t, s1, output)
+            # if controller.is_audio == True:
+            #     fs, data = wavfile.read('./audio/test.wav')
+            #     sd.play(output, fs)
 
         button2 = ttk.Button(self, text="Plot Result",
                              command=plot_result)
@@ -636,22 +660,86 @@ class PageTen(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        signal1 = controller.signal1
+        fs, data = wavfile.read('./audio/test.wav')
+
+        def plot(t, s1):
+            f_sample = t.size
+            xf = fftfreq(f_sample, 1/f_sample)
+            fft_output2 = (fft(s1.sum))
+            fft_output2 = fft_output2/np.max(fft_output2)
+            fig2 = Figure(figsize=(4, 4),
+                          dpi=100)
+            plot2 = fig2.add_subplot(111)
+            plot2.plot(xf, np.abs(fft_output2))
+            canvas = FigureCanvasTkAgg(fig2,
+                                       master=self)
+            canvas.draw()
+            canvas.get_tk_widget().place(relx=.32, rely=.3)
+
+        def play():
+            sd.play(signal1.sum, fs)
+
+        def add_high_frequency_noise():
+            fs, data = wavfile.read('./audio/test.wav')
+            signal1 = controller.signal1
+            signal1.set_sum(data.T[0])
+            f_sample = 44000
+            t = np.linspace(0, 5, 266240)
+            signal1.add_high_frequency_noise(t, 500)
+            # plot
+            plot(t, signal1)
+
+        def add_white_noise():
+            fs, data = wavfile.read('./audio/test.wav')
+            signal1 = controller.signal1
+            signal1.set_sum(data.T[0])
+            f_sample = 44000
+            t = np.linspace(0, 5, 266240)
+            signal1.add_white_noise(500)
+            # plot
+            plot(t, signal1)
+
+        def reset():
+            fs, data = wavfile.read('./audio/test.wav')
+            signal1 = controller.signal1
+            signal1.set_sum(data.T[0])
+            f_sample = 44000
+            t = np.linspace(0, 5, 266240)
+            # plot
+            plot(t, signal1)
 
         label = ttk.Label(
             self, text="Choose the audio signal", font=LARGE_FONT)
-        label.place(relx=.3, rely=.1)
+        label.place(relx=.35, rely=.05)
 
-        button1 = ttk.Button(self, text="1st audio",
-                             command=lambda: controller.show_frame(PageThree))
-        button1.place(relx=.25, rely=.5, width=150, height=50)
+        button1 = ttk.Button(self, text="Add high frequency noise",
+                             command=add_high_frequency_noise)
+        button1.place(relx=.2, rely=.15, width=150, height=50)
 
-        button2 = ttk.Button(self, text="2nd audio",
+        button2 = ttk.Button(self, text="Add white noise",
+                             command=add_white_noise)
+        button2.place(relx=.6, rely=.15, width=150, height=50)
+
+        button5 = ttk.Button(self, text="reset",
+                             command=reset)
+        button5.place(relx=.35, rely=.9)
+
+        button6 = ttk.Button(self, text="play",
+                             command=play)
+        button6.place(relx=.6, rely=.9)
+
+        button3 = ttk.Button(self, text="back",
+                             command=lambda: controller.show_frame(PageOne))
+        button3.place(relx=.1, rely=.9)
+
+        button4 = ttk.Button(self, text="next",
                              command=lambda: controller.show_frame(PageThree))
-        button2.place(relx=.6, rely=.5, width=150, height=50)
+        button4.place(relx=.85, rely=.9)
 
 
 app = Projet()
-app.iconbitmap('ulfg_logo.ico')
+app.iconbitmap('./img/ulfg_logo.ico')
 app.resizable(False, False)
 app.tk_setPalette('black')
 app.mainloop()

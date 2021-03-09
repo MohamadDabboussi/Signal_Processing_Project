@@ -13,6 +13,9 @@ class My_Signal:
         else:
             self.sum = 0
 
+    def set_sum(self, data):
+        self.sum = data
+
     def add_signal(self, t, amplitude, frequency):
         self.sum = self.sum+amplitude*np.sin(2*np.pi*frequency*t)
 
@@ -23,8 +26,16 @@ class My_Signal:
         noise = amplitude*np.random.normal(mean, std, size=num_samples)
         self.sum = self.sum+noise
 
+    def add_high_frequency_noise(self, t, amplitude=1):
+        hf_noise = amplitude*(np.sin(2*np.pi*8000*t)+np.sin(2*np.pi*7000*t) +
+                              np.sin(2*np.pi*6000*t)+np.sin(2*np.pi*10000*t))
+        self.sum = self.sum+hf_noise
+
     def reset_signal(self):
-        self.sum = np.zeros(self.sum.size)
+        try:
+            self.sum = np.zeros(self.sum.size)
+        except:
+            self.sum = 0
 
 
 # f_sample = 44000
