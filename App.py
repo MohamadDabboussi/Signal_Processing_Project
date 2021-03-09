@@ -81,7 +81,7 @@ class PageOne(tk.Frame):
         button1.place(relx=.25, rely=.5, width=150, height=50)
 
         button2 = ttk.Button(self, text="Signal Audio",
-                             command=lambda: controller.show_frame(PageTwo))
+                             command=lambda: controller.show_frame(PageTen))
         button2.place(relx=.6, rely=.5, width=150, height=50)
 
 
@@ -630,6 +630,24 @@ class PageSix(tk.Frame):
         button1 = ttk.Button(self, text="Back",
                              command=lambda: controller.show_frame(PageThree))
         button1.place(relx=.1, rely=.94)
+
+
+class PageTen(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        label = ttk.Label(
+            self, text="Choose the audio signal", font=LARGE_FONT)
+        label.place(relx=.3, rely=.1)
+
+        button1 = ttk.Button(self, text="1st audio",
+                             command=lambda: controller.show_frame(PageThree))
+        button1.place(relx=.25, rely=.5, width=150, height=50)
+
+        button2 = ttk.Button(self, text="2nd audio",
+                             command=lambda: controller.show_frame(PageThree))
+        button2.place(relx=.6, rely=.5, width=150, height=50)
 
 
 app = Projet()
