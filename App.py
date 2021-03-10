@@ -1,19 +1,20 @@
-import tkinter as tk
+﻿import tkinter as tk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
-from Filter_Class import My_Filter
+from Filter_Class import My_FilterRII, My_FiltreRIF
 from Signal_Class import My_Signal
+from Signal_Class import Audio_Signal, MyRIFSignal
 from scipy import signal
 import matplotlib.pyplot as plt
-from scipy.fftpack import fft, fftfreq, fftshift
+from scipy.fftpack import fft, fftfreq, fftshift, ifft
 import math
 import numpy as np
 import sounddevice as sd
 from scipy.io import wavfile
-
+from tkinter import messagebox
 LARGE_FONT = ("Verdana", 20)
 MEDIUM_FONT = ("Verdana", 12)
 
@@ -32,12 +33,12 @@ class Projet(tk.Tk):
         self.geometry("1300x760")
 
         self.signal1 = My_Signal()
-        self.filter1 = My_Filter()
+        self.filter1 = My_FilterRII()
         self.is_audio = False
 
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTwo, PageThree, PageFour, PageFive, PageSix, PageTen):
+        for F in (StartPage, PageOne, PageTwo, PageThree, PageFour, PageFive, PageSix, PageTen, RIFPage):
 
             frame = F(container, self)
             self.frames[F] = frame
@@ -58,15 +59,15 @@ class StartPage(tk.Frame):
 
         label = ttk.Label(
             self, text="Projet Traitement Numerique", font=LARGE_FONT)
-        label.place(relx=.3, rely=.1)
+        label.place(relx=.35, rely=.1)
 
         button = ttk.Button(self, text="RII Filter",
                             command=lambda: controller.show_frame(PageOne))
-        button.place(relx=.4, rely=.5, width=150, height=50)
+        button.place(relx=.3, rely=.5, width=150, height=50)
 
-        # button2 = ttk.Button(self, text="RIF Filter",
-        #                      command=lambda: controller.show_frame(PageTwo))
-        # button2.pack()
+        button2 = ttk.Button(self, text="RIF Filter",
+                             command=lambda: controller.show_frame(RIFPage))
+        button2.place(relx=.6, rely=.5, width=150, height=50)
 
 
 class PageOne(tk.Frame):
@@ -575,10 +576,7 @@ class PageSix(tk.Frame):
             # adding the subplot
             plot1 = fig.add_subplot(111)
             # plotting the graph
-            if controller.is_audio == False:
-                plot1.plot(t[:300], s1.sum[:300])
-            else:
-                plot1.plot(t, s1.sum)
+            plot1.plot(t[:300], s1.sum[:300])
             # creating the Tkinter canvas
             # containing the Matplotlib figure
             canvas = FigureCanvasTkAgg(fig,
@@ -589,7 +587,7 @@ class PageSix(tk.Frame):
 
             # fig2
             f_sample = t.size
-            xf = fftfreq(f_sample, 1)
+            xf = fftfreq(f_sample, 1/f_sample)
             fft_output2 = (fft(s1.sum))
             fft_output2 = fft_output2/np.max(fft_output2)
             fig2 = Figure(figsize=(3, 3),
@@ -611,10 +609,7 @@ class PageSix(tk.Frame):
             # adding the subplot
             plot3 = fig3.add_subplot(111)
             # plotting the graph
-            if controller.is_audio == False:
-                plot3.plot(t[:300], output[:300])
-            else:
-                plot3.plot(t, output)
+            plot3.plot(t[:300], output[:300])
             # creating the Tkinter canvas
             # containing the Matplotlib figure
             canvas = FigureCanvasTkAgg(fig3,
@@ -649,9 +644,9 @@ class PageSix(tk.Frame):
             filter1 = controller.filter1
             output = filter1.filter_apply(filter1.b, filter1.a, s1.sum)
             plot(t, s1, output)
-            if controller.is_audio == True:
-                fs, data = wavfile.read('./audio/test.wav')
-                sd.play(output, fs)
+            # if controller.is_audio == True:
+            #     fs, data = wavfile.read('./audio/test.wav')
+            #     sd.play(output, fs)
 
         button2 = ttk.Button(self, text="Plot Result",
                              command=plot_result)
@@ -744,8 +739,482 @@ class PageTen(tk.Frame):
         button4.place(relx=.85, rely=.9)
 
 
+class RIFPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.filter_Windows = ["boxcar", "triangle",
+                               "blackman", "hamming", "hanning"]
+        self.filter_types = ["bandpass", "lowpass", "highpass", "bandstop"]
+        self.audionaddedcount = 0
+        self.audio_Signal = None
+        self.myrifsignal = MyRIFSignal()
+        self.myrifFilter = My_FiltreRIF()
+        self.Frame1 = tk.Frame(self)
+        self.Frame1.place(relx=0.0, rely=0.0, relheight=1.007, relwidth=0.313)
+        self.Frame1.configure(relief='groove')
+        self.Frame1.configure(borderwidth="2")
+        self.Frame1.configure(relief="groove")
+        self.Frame1.configure(background="#000000")
+        self.Frame1.configure(highlightbackground="#FFFFFF")
+        self.Frame1.configure(highlightcolor="black")
+
+        self.GetFilebtn = tk.Button(self.Frame1, command=lambda: self.play())
+        self.GetFilebtn.place(relx=0.541, rely=0.131, height=24, width=97)
+        self.GetFilebtn.configure(activebackground="#ececec")
+        self.GetFilebtn.configure(activeforeground="#000000")
+        self.GetFilebtn.configure(background="#000000")
+        self.GetFilebtn.configure(disabledforeground="#a3a3a3")
+        self.GetFilebtn.configure(foreground="#000000")
+        self.GetFilebtn.configure(highlightbackground="#d9d9d9")
+        self.GetFilebtn.configure(highlightcolor="black")
+        self.GetFilebtn.configure(pady="0")
+        self.GetFilebtn.configure(text='''Play Audio File''')
+
+        self.GetFilebtn_1 = tk.Button(
+            self.Frame1, command=lambda: self.addAudioSignal())
+        self.GetFilebtn_1.place(relx=0.197, rely=0.131, height=24, width=97)
+        self.GetFilebtn_1.configure(activebackground="#ececec")
+        self.GetFilebtn_1.configure(activeforeground="#000000")
+        self.GetFilebtn_1.configure(background="#000000")
+        self.GetFilebtn_1.configure(disabledforeground="#a3a3a3")
+        self.GetFilebtn_1.configure(foreground="#000000")
+        self.GetFilebtn_1.configure(highlightbackground="#d9d9d9")
+        self.GetFilebtn_1.configure(highlightcolor="black")
+        self.GetFilebtn_1.configure(pady="0")
+        self.GetFilebtn_1.configure(text='''Add Audio File''')
+
+        self.Label1_1 = tk.Label(self.Frame1)
+        self.Label1_1.place(relx=0.369, rely=0.314, height=21, width=64)
+        self.Label1_1.configure(activebackground="#f9f9f9")
+        self.Label1_1.configure(activeforeground="black")
+        self.Label1_1.configure(background="#000000")
+        self.Label1_1.configure(disabledforeground="#a3a3a3")
+        self.Label1_1.configure(foreground="#000000")
+        self.Label1_1.configure(highlightbackground="#d9d9d9")
+        self.Label1_1.configure(highlightcolor="black")
+        self.Label1_1.configure(text='''Noise Amp''')
+
+        self.Frequency_1 = tk.Entry(self.Frame1)
+        self.Frequency_1.place(relx=0.52, rely=0.314,
+                               height=20, relwidth=0.133)
+
+        self.Frequency_1.configure(background="white")
+        self.Frequency_1.configure(disabledforeground="#a3a3a3")
+        self.Frequency_1.configure(font="TkFixedFont")
+        self.Frequency_1.configure(foreground="#000000")
+        self.Frequency_1.configure(highlightbackground="#d9d9d9")
+        self.Frequency_1.configure(highlightcolor="black")
+        self.Frequency_1.configure(insertbackground="black")
+        self.Frequency_1.configure(selectbackground="blue")
+        self.Frequency_1.configure(selectforeground="white")
+
+        self.DisplayFilterbtn_1 = tk.Button(
+            self.Frame1, command=lambda: self.AddWhiteNoise())
+
+        self.DisplayFilterbtn_1.place(
+            relx=0.369, rely=0.275, height=24, width=114)
+        self.DisplayFilterbtn_1.configure(activebackground="#ececec")
+        self.DisplayFilterbtn_1.configure(activeforeground="#000000")
+        self.DisplayFilterbtn_1.configure(background="#000000")
+        self.DisplayFilterbtn_1.configure(disabledforeground="#a3a3a3")
+        self.DisplayFilterbtn_1.configure(foreground="#000000")
+        self.DisplayFilterbtn_1.configure(highlightbackground="#d9d9d9")
+        self.DisplayFilterbtn_1.configure(highlightcolor="black")
+        self.DisplayFilterbtn_1.configure(pady="0")
+        self.DisplayFilterbtn_1.configure(text='''Add white noise''')
+
+        self.Frequency = tk.Entry(self.Frame1)
+        self.Frequency.place(relx=0.614, rely=0.209, height=20, relwidth=0.329)
+        self.Frequency.configure(background="white")
+        self.Frequency.configure(disabledforeground="#a3a3a3")
+        self.Frequency.configure(font="TkFixedFont")
+        self.Frequency.configure(foreground="#000000")
+        self.Frequency.configure(highlightbackground="#d9d9d9")
+        self.Frequency.configure(highlightcolor="black")
+        self.Frequency.configure(insertbackground="black")
+        self.Frequency.configure(selectbackground="blue")
+        self.Frequency.configure(selectforeground="white")
+
+        self.Amplitude = tk.Entry(self.Frame1)
+        self.Amplitude.place(relx=0.172, rely=0.209, height=20, relwidth=0.28)
+        self.Amplitude.configure(background="white")
+        self.Amplitude.configure(disabledforeground="#a3a3a3")
+        self.Amplitude.configure(font="TkFixedFont")
+        self.Amplitude.configure(foreground="#000000")
+        self.Amplitude.configure(highlightbackground="#d9d9d9")
+        self.Amplitude.configure(highlightcolor="black")
+        self.Amplitude.configure(insertbackground="black")
+        self.Amplitude.configure(selectbackground="blue")
+        self.Amplitude.configure(selectforeground="white")
+
+        self.Label1 = tk.Label(self.Frame1)
+        self.Label1.place(relx=0.516, rely=0.209, height=21, width=34)
+        self.Label1.configure(activebackground="#f9f9f9")
+        self.Label1.configure(activeforeground="black")
+        self.Label1.configure(background="#000000")
+        self.Label1.configure(disabledforeground="#a3a3a3")
+        self.Label1.configure(foreground="#000000")
+        self.Label1.configure(highlightbackground="#d9d9d9")
+        self.Label1.configure(highlightcolor="black")
+        self.Label1.configure(text='''Freq''')
+
+        self.AmplitudeLabel = tk.Label(self.Frame1)
+        self.AmplitudeLabel.place(relx=0.049, rely=0.209, height=21, width=34)
+        self.AmplitudeLabel.configure(activebackground="#f9f9f9")
+        self.AmplitudeLabel.configure(activeforeground="black")
+        self.AmplitudeLabel.configure(background="#000000")
+        self.AmplitudeLabel.configure(disabledforeground="#a3a3a3")
+        self.AmplitudeLabel.configure(foreground="#000000")
+        self.AmplitudeLabel.configure(highlightbackground="#d9d9d9")
+        self.AmplitudeLabel.configure(highlightcolor="black")
+        self.AmplitudeLabel.configure(text='''Amp''')
+
+        self.Frame3 = tk.Frame(self.Frame1)
+        self.Frame3.place(relx=0.049, rely=0.353,
+                          relheight=0.438, relwidth=0.897)
+        self.Frame3.configure(relief='groove')
+        self.Frame3.configure(borderwidth="2")
+        self.Frame3.configure(relief="groove")
+        self.Frame3.configure(background="#000000")
+        self.Frame3.configure(highlightbackground="#d9d9d9")
+        self.Frame3.configure(highlightcolor="black")
+
+        self.Label2 = tk.Label(self.Frame3)
+        self.Label2.place(relx=0.384, rely=0.09, height=27, width=94)
+        self.Label2.configure(activebackground="#f9f9f9")
+        self.Label2.configure(activeforeground="black")
+        self.Label2.configure(background="#000000")
+        self.Label2.configure(disabledforeground="#a3a3a3")
+        self.Label2.configure(font="-family {Goudy Old Style} -size 18")
+        self.Label2.configure(foreground="#000000")
+        self.Label2.configure(highlightbackground="#d9d9d9")
+        self.Label2.configure(highlightcolor="black")
+        self.Label2.configure(text='''Filtrage''')
+
+        self.Button3 = tk.Button(
+            self.Frame3, command=lambda: self.ApplyFilter())
+        self.Button3.place(relx=0.548, rely=0.866, height=24, width=79)
+        self.Button3.configure(activebackground="#ececec")
+        self.Button3.configure(activeforeground="#000000")
+        self.Button3.configure(background="#000000")
+        self.Button3.configure(disabledforeground="#a3a3a3")
+        self.Button3.configure(foreground="#000000")
+        self.Button3.configure(highlightbackground="#d9d9d9")
+        self.Button3.configure(highlightcolor="black")
+        self.Button3.configure(pady="0")
+        self.Button3.configure(text='''Apply filter''')
+
+        self.Label3 = tk.Label(self.Frame3)
+        self.Label3.place(relx=0.082, rely=0.275, height=28, width=34)
+        self.Label3.configure(activebackground="#f9f9f9")
+        self.Label3.configure(activeforeground="black")
+        self.Label3.configure(background="#000000")
+        self.Label3.configure(disabledforeground="#a3a3a3")
+        self.Label3.configure(foreground="#000000")
+        self.Label3.configure(highlightbackground="#d9d9d9")
+        self.Label3.configure(highlightcolor="black")
+        self.Label3.configure(text='''N''')
+
+        self.N_Entry = tk.Entry(self.Frame3)
+        self.N_Entry.place(relx=0.301, rely=0.275, height=20, relwidth=0.641)
+        self.N_Entry.configure(background="white")
+        self.N_Entry.configure(disabledforeground="#a3a3a3")
+        self.N_Entry.configure(font="TkFixedFont")
+        self.N_Entry.configure(foreground="#000000")
+        self.N_Entry.configure(highlightbackground="#d9d9d9")
+        self.N_Entry.configure(highlightcolor="black")
+        self.N_Entry.configure(insertbackground="black")
+        self.N_Entry.configure(selectbackground="blue")
+        self.N_Entry.configure(selectforeground="white")
+
+        self.Label3_1 = tk.Label(self.Frame3)
+        self.Label3_1.place(relx=0.055, rely=0.418, height=27, width=64)
+        self.Label3_1.configure(activebackground="#f9f9f9")
+        self.Label3_1.configure(activeforeground="black")
+        self.Label3_1.configure(background="#000000")
+        self.Label3_1.configure(disabledforeground="#a3a3a3")
+        self.Label3_1.configure(foreground="#000000")
+        self.Label3_1.configure(highlightbackground="#d9d9d9")
+        self.Label3_1.configure(highlightcolor="black")
+        self.Label3_1.configure(text='''Cutoff freq''')
+
+        self.CutOff_Entry = tk.Entry(self.Frame3)
+        self.CutOff_Entry.place(relx=0.301, rely=0.418,
+                                height=20, relwidth=0.641)
+        self.CutOff_Entry.configure(background="white")
+        self.CutOff_Entry.configure(disabledforeground="#a3a3a3")
+        self.CutOff_Entry.configure(font="TkFixedFont")
+        self.CutOff_Entry.configure(foreground="#000000")
+        self.CutOff_Entry.configure(highlightbackground="#d9d9d9")
+        self.CutOff_Entry.configure(highlightcolor="black")
+        self.CutOff_Entry.configure(insertbackground="black")
+        self.CutOff_Entry.configure(selectbackground="blue")
+        self.CutOff_Entry.configure(selectforeground="white")
+
+        self.Label3_1_2 = tk.Label(self.Frame3)
+        self.Label3_1_2.place(relx=0.055, rely=0.567, height=27, width=64)
+        self.Label3_1_2.configure(activebackground="#f9f9f9")
+        self.Label3_1_2.configure(activeforeground="black")
+        self.Label3_1_2.configure(background="#000000")
+        self.Label3_1_2.configure(disabledforeground="#a3a3a3")
+        self.Label3_1_2.configure(foreground="#000000")
+        self.Label3_1_2.configure(highlightbackground="#d9d9d9")
+        self.Label3_1_2.configure(highlightcolor="black")
+        self.Label3_1_2.configure(text='''Filtre''')
+
+        self.FilterTypeCB = ttk.Combobox(self.Frame3, values=self.filter_types)
+        self.FilterTypeCB.place(relx=0.301, rely=0.567,
+                                relheight=0.081, relwidth=0.638)
+        self.FilterTypeCB.configure(foreground="#000000")
+        self.FilterTypeCB.configure(takefocus="")
+
+        self.Label3_1_2_1 = tk.Label(self.Frame3)
+        self.Label3_1_2_1.place(relx=0.055, rely=0.716, height=27, width=64)
+        self.Label3_1_2_1.configure(activebackground="#f9f9f9")
+        self.Label3_1_2_1.configure(activeforeground="black")
+        self.Label3_1_2_1.configure(background="#000000")
+        self.Label3_1_2_1.configure(disabledforeground="#a3a3a3")
+        self.Label3_1_2_1.configure(foreground="#000000")
+        self.Label3_1_2_1.configure(highlightbackground="#d9d9d9")
+        self.Label3_1_2_1.configure(highlightcolor="black")
+        self.Label3_1_2_1.configure(text='''Window''')
+
+        self.Button3_1 = tk.Button(
+            self.Frame3, command=lambda: self.BuildMyFilter())
+        self.Button3_1.place(relx=0.247, rely=0.866, height=24, width=79)
+        self.Button3_1.configure(activebackground="#ececec")
+        self.Button3_1.configure(activeforeground="#000000")
+        self.Button3_1.configure(background="#000000")
+        self.Button3_1.configure(disabledforeground="#a3a3a3")
+        self.Button3_1.configure(foreground="#000000")
+        self.Button3_1.configure(highlightbackground="#d9d9d9")
+        self.Button3_1.configure(highlightcolor="black")
+        self.Button3_1.configure(pady="0")
+        self.Button3_1.configure(text='''Display filter''')
+
+        self.WindowCB = ttk.Combobox(self.Frame3, values=self.filter_Windows)
+        self.WindowCB.configure(foreground="#000000")
+        self.WindowCB.place(relx=0.301, rely=0.716,
+                            relheight=0.081, relwidth=0.638)
+        self.WindowCB.configure(takefocus="")
+
+        self.DisplayFilterbtn = tk.Button(
+            self.Frame1, command=lambda: self.addSineSignal())
+        self.DisplayFilterbtn.place(
+            relx=0.123, rely=0.275, height=24, width=84)
+        self.DisplayFilterbtn.configure(activebackground="#ececec")
+        self.DisplayFilterbtn.configure(activeforeground="#000000")
+        self.DisplayFilterbtn.configure(background="#000000")
+        self.DisplayFilterbtn.configure(disabledforeground="#a3a3a3")
+        self.DisplayFilterbtn.configure(foreground="#000000")
+        self.DisplayFilterbtn.configure(highlightbackground="#d9d9d9")
+        self.DisplayFilterbtn.configure(highlightcolor="black")
+        self.DisplayFilterbtn.configure(pady="0")
+        self.DisplayFilterbtn.configure(text='''Add Signal''')
+
+        self.Resetbtn = tk.Button(self.Frame1, command=lambda: self.Reset())
+        self.Resetbtn.place(relx=0.688, rely=0.275, height=24, width=84)
+        self.Resetbtn.configure(activebackground="#ececec")
+        self.Resetbtn.configure(activeforeground="#000000")
+        self.Resetbtn.configure(background="#000000")
+        self.Resetbtn.configure(disabledforeground="#a3a3a3")
+        self.Resetbtn.configure(foreground="#FFFFFF")
+        self.Resetbtn.configure(highlightbackground="#d9d9d9")
+        self.Resetbtn.configure(highlightcolor="black")
+        self.Resetbtn.configure(pady="0")
+        self.Resetbtn.configure(text='''Reset''')
+
+        self.Label2_1 = tk.Label(self.Frame1)
+        self.Label2_1.place(relx=0.344, rely=0.013, height=27, width=94)
+        self.Label2_1.configure(activebackground="#f9f9f9")
+        self.Label2_1.configure(activeforeground="black")
+        self.Label2_1.configure(background="#000000")
+        self.Label2_1.configure(disabledforeground="#a3a3a3")
+        self.Label2_1.configure(font="-family {Goudy Old Style} -size 22")
+        self.Label2_1.configure(foreground="#000000")
+        self.Label2_1.configure(highlightbackground="#d9d9d9")
+        self.Label2_1.configure(highlightcolor="black")
+        self.Label2_1.configure(text='''RIF''')
+
+        self.Frame2 = tk.Frame(self)
+        self.Frame2.place(relx=0.308, rely=0.0,
+                          relheight=1.008, relwidth=0.695)
+        self.Frame2.configure(relief='groove')
+        self.Frame2.configure(borderwidth="2")
+        self.Frame2.configure(relief="groove")
+        self.Frame2.configure(background="#d9d9d9")
+        self.Frame2.configure(highlightbackground="#d9d9d9")
+        self.Frame2.configure(highlightcolor="black")
+
+        self.Signal_t = ttk.Frame(self.Frame2)
+        self.Signal_t.place(relx=0.022, rely=0.026,
+                            relheight=0.279, relwidth=0.51)
+        self.Signal_t.configure(relief='groove')
+        self.Signal_t.configure(borderwidth="2")
+        self.Signal_t.configure(relief="groove")
+
+        self.Signal_F = ttk.Frame(self.Frame2)
+        self.Signal_F.place(relx=0.642, rely=0.026,
+                            relheight=0.281, relwidth=0.344)
+        self.Signal_F.configure(relief='groove')
+        self.Signal_F.configure(borderwidth="2")
+        self.Signal_F.configure(relief="groove")
+
+        self.FiltreSignal_t = ttk.Frame(self.Frame2)
+        self.FiltreSignal_t.place(
+            relx=0.022, rely=0.366, relheight=0.279, relwidth=0.51)
+        self.FiltreSignal_t.configure(relief='groove')
+        self.FiltreSignal_t.configure(borderwidth="2")
+        self.FiltreSignal_t.configure(relief="groove")
+
+        self.FilterSignal_F = ttk.Frame(self.Frame2)
+        self.FilterSignal_F.place(
+            relx=0.642, rely=0.366, relheight=0.278, relwidth=0.344)
+        self.FilterSignal_F.configure(relief='groove')
+        self.FilterSignal_F.configure(borderwidth="2")
+        self.FilterSignal_F.configure(relief="groove")
+
+        self.Filtre_F = ttk.Frame(self.Frame2)
+        self.Filtre_F.place(relx=0.31, rely=0.692,
+                            relheight=0.281, relwidth=0.347)
+        self.Filtre_F.configure(relief='groove')
+        self.Filtre_F.configure(borderwidth="2")
+        self.Filtre_F.configure(relief="groove")
+
+    def Import_Audio_signal(self):
+        self.audio_Signal = Audio_Signal()
+
+    def plot(self, box, x, y):
+        # the figure that will contain the plot
+        fig = Figure(figsize=(4, 3), dpi=100)
+        # adding the subplot
+        plot1 = fig.add_subplot(111)
+        # plotting the graph
+        for child in box.winfo_children():
+            child.destroy()
+        plot1.plot(x, y)
+        # creating the Tkinter canvas
+        # containing the Matplotlib figure
+        canvas = FigureCanvasTkAgg(fig, master=box)
+        canvas.draw()
+        # placing the canvas on the Tkinter window
+        canvas.get_tk_widget().grid(row=1, column=3, columnspan=2)
+        canvas.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+
+    def play(self):
+        try:
+            sd.play(self.myrifsignal.getsignal(), self.myrifsignal.getfs())
+
+        except:
+            messagebox.showerror("ERROR", "Please add a signal")
+
+    def addAudioSignal(self):
+        if(self.audionaddedcount == 0):
+            self.audionaddedcount += 1
+            fs, data = wavfile.read("./audio/test.wav")
+            self.myrifsignal.AddSignal(data[:, 0])
+            x = self.myrifsignal.gettime()
+            y = self.myrifsignal.getsignal()
+            self.plot(self.Signal_t, x, y)
+            yf = fft(y)
+            fs = len(y)
+            xf = fftfreq(fs, 1/fs)
+            self.plot(self.Signal_F, xf, abs(yf))
+            messagebox.showinfo("Info", "Done")
+        else:
+            messagebox.showerror(
+                "ERROR", "The audio file has been added before")
+
+    def addSineSignal(self):
+        try:
+            sig = self.myrifsignal.SinSignal(
+                int(self.Amplitude.get()), int(self.Frequency.get()))
+
+            self.myrifsignal.AddSignal(sig)
+            time = self.myrifsignal.gettime()
+            signal = self.myrifsignal.getsignal()
+            self.plot(self.Signal_t, time, signal)
+            yf = fft(signal)
+            fs = len(signal)
+            xf = fftfreq(fs, 1/fs)
+            self.plot(self.Signal_F, xf, abs(yf))
+        except:
+            messagebox.showerror(
+                "", "please enter signal amplitude and frequency")
+
+    def AddWhiteNoise(self, Amplitude=10):
+        try:
+            self.myrifsignal.AddWhiteNoise(int(self.Frequency_1.get()))
+        except:
+            self.myrifsignal.AddWhiteNoise()
+        time = self.myrifsignal.gettime()
+        signal = self.myrifsignal.getsignal()
+        self.plot(self.Signal_t, time, signal)
+        yf = fft(signal)
+        fs = len(signal)
+        xf = fftfreq(fs, 1/fs)
+        self.plot(self.Signal_F, xf, abs(yf))
+
+    def BuildMyFilter(self):
+        try:
+            if(self.WindowCB.get() == "" or self.FilterTypeCB.get() == ""):
+                raise EOFError()
+            self.myrifFilter.setN(int(self.N_Entry.get()))
+            self.myrifFilter.setWindow(self.WindowCB.get())
+            if(self.FilterTypeCB.get() == "bandpass" or self.FilterTypeCB.get() == "bandstop"):
+                self.myrifFilter.setCutOff(
+                    np.array(str(self.CutOff_Entry.get()).split(',')).astype(int))
+            else:
+                self.myrifFilter.setCutOff(int(self.CutOff_Entry.get()))
+
+            self.myrifFilter.setTypef(self.FilterTypeCB.get())
+            self.myrifFilter.setFs(266240)
+            [w, h_df, h] = self.myrifFilter.getMyFilter()
+            self.plot(self.Filtre_F, w, h_df)
+        except:
+            messagebox.showerror("error", "Please add all filter's info")
+
+    def ApplyFilter(self):
+        [w, h_df, h] = self.myrifFilter.getMyFilter()
+        self.yf = fft(self.myrifsignal.getsignal())*h
+        self.xf = fftfreq(len(self.myrifsignal.getsignal()),
+                          1/len(self.myrifsignal.getsignal()))
+        self.plot(self.FilterSignal_F, self.xf, abs(self.yf))
+        self.plot(self.FiltreSignal_t, self.myrifsignal.time, ifft(self.yf))
+        sd.play((ifft(self.yf)).astype(np.int16), self.myrifsignal.getfs())
+
+    def Reset(self):
+        self.myrifsignal.Reset()
+        self.audionaddedcount = 0
+        try:
+            for child in self.Signal_F.winfo_children():
+                child.destroy()
+        except:
+            pass
+        try:
+            for child in self.Signal_t.winfo_children():
+                child.destroy()
+        except:
+            pass
+        try:
+            for child in self.FiltreSignal_t.winfo_children():
+                child.destroy()
+        except:
+            pass
+        try:
+            for child in self.FilterSignal_F.winfo_children():
+                child.destroy()
+        except:
+            pass
+        try:
+            for child in self.Filtre_F.winfo_children():
+                child.destroy()
+        except:
+            pass
+
+
 app = Projet()
-app.iconbitmap('./img/ulfg_logo.ico')
 app.resizable(False, False)
 app.tk_setPalette('black')
 app.mainloop()

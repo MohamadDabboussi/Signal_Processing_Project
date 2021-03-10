@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft, fftfreq, fftshift
 import math
 import numpy as np
-
+from scipy.io import wavfile
 
 class My_Signal:
     def __init__(self, t=None, amplitude=None, frequency=None):
@@ -36,6 +36,59 @@ class My_Signal:
             self.sum = np.zeros(self.sum.size)
         except:
             self.sum = 0
+
+class Audio_Signal:
+
+    def __init__(self):
+        self.fs=None
+        self.data=None
+        self.read_signal()
+    def getfs(self):
+        return self.fs
+    def getdata(self):
+        return self.data
+
+    def read_signal(self,path="./audio/test.wav"):
+        self.fs, self.data = wavfile.read(path)
+
+
+class MyRIFSignal:
+    def __init__(self):
+        self.fs=48000
+        self.signal=None
+        self.duration=266240 / self.fs
+        self.time = np.linspace(0., self.duration, 266240)
+    def SinSignal(self,Amp,fre):
+        return Amp*np.sin(2*np.pi*fre*self.time)
+
+    def AddSignal(self,signal):
+        try:
+            self.signal=np.add(self.signal,signal)
+        except:
+           self.setsignal(signal)
+    def AddWhiteNoise(self, amplitude=1):
+        mean = 0
+        std = 1
+        num_samples = len(self.signal)
+        noise = amplitude*np.random.normal(mean, std, size=num_samples)
+        self.AddSignal(noise)
+
+    def gettime(self):
+        return self.time
+    def getfs(self):
+        return self.fs
+    def getsignal(self):
+        return self.signal
+    def setfs(self,fs):
+        self.fs=fs
+    def setsignal(self,signal):
+        self.signal=signal
+    def setduration(self,time):
+        self.duration=time
+    def Reset(self):
+        self.signal=None
+
+
 
 
 # f_sample = 44000
