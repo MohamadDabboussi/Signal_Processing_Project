@@ -1216,5 +1216,6 @@ class RIFPage(tk.Frame):
 
 app = Projet()
 app.resizable(False, False)
+app.iconbitmap('./img/ulfg_logo.ico')
 app.tk_setPalette('black')
 app.mainloop()
