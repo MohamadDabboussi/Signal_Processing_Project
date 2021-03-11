@@ -86,37 +86,44 @@ class My_FilterRII:
         return output
 
     def filter_plot_prep(self, b, a):
-        w, h = signal.freqz(b, a, 512)
+        w, h = signal.freqz(b, a, 266240)
         return w, h
 
+
 class My_FiltreRIF:
-    def __init__(self,N=None,window=None,typeF=None,cutoff=None,Fs=None):
+    def __init__(self, N=None, window=None, typeF=None, cutoff=None, Fs=None):
         try:
             self.N = N
             self.cutoff = cutoff
             self.typeF = typeF
             self.window = window
-            self.Fs=Fs
-            self.h_f=None
-            self.freq=None
-            self.h_t=None
-        except:pass
+            self.Fs = Fs
+            self.h_f = None
+            self.freq = None
+            self.h_t = None
+        except:
+            pass
 
-    def setN(self,N):
-        self.N=N
-    def setCutOff(self,cutoff):
+    def setN(self, N):
+        self.N = N
+
+    def setCutOff(self, cutoff):
         self.cutoff = cutoff
-    def setTypef(self,typeF):
+
+    def setTypef(self, typeF):
         self.typeF = typeF
-    def setWindow(self,window):
-        self.window=window
-    def setFs(self,Fs):
-        self.Fs=Fs
-    
+
+    def setWindow(self, window):
+        self.window = window
+
+    def setFs(self, Fs):
+        self.Fs = Fs
+
     def getMyFilter(self):
         w_c = 2*self.cutoff/self.Fs
-        t = signal.firwin(self.N,w_c,window = self.window, pass_zero=self.typeF)
-        [w,self.h_f] = signal.freqz(t,worN=self.Fs,whole=True)
-        self.f = self.Fs * w /(2*np.pi)
+        t = signal.firwin(self.N, w_c, window=self.window,
+                          pass_zero=self.typeF)
+        [w, self.h_f] = signal.freqz(t, worN=self.Fs, whole=True)
+        self.f = self.Fs * w / (2*np.pi)
         h_df = 20*np.log10(abs(self.h_f))
-        return self.f,h_df,self.h_f
+        return self.f, h_df, self.h_f

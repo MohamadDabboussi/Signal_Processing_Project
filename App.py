@@ -202,6 +202,12 @@ class PageThree(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
+        def PageTwo_PageTen():
+            if controller.is_audio == False:
+                controller.show_frame(PageTwo)
+            else:
+                controller.show_frame(PageTen)
+
         label = ttk.Label(
             self, text="Do you know the order of the filter and the cutoff frequency ?", font=LARGE_FONT)
         label.place(relx=.2, rely=.1)
@@ -215,7 +221,7 @@ class PageThree(tk.Frame):
         button2.place(relx=.6, rely=.5, width=100, height=50)
 
         button3 = ttk.Button(self, text="Back",
-                             command=lambda: controller.show_frame(PageTwo))
+                             command=PageTwo_PageTen)
         button3.place(relx=.1, rely=.8)
 
 
@@ -644,9 +650,10 @@ class PageSix(tk.Frame):
             filter1 = controller.filter1
             output = filter1.filter_apply(filter1.b, filter1.a, s1.sum)
             plot(t, s1, output)
-            # if controller.is_audio == True:
-            #     fs, data = wavfile.read('./audio/test.wav')
-            #     sd.play(output, fs)
+            if controller.is_audio == True:
+                w, h = filter1.filter_plot_prep(filter1.b, filter1.a)
+                yf = fft(s1.sum)*h
+                sd.play((ifft(yf)).astype(np.int16), 48000)
 
         button2 = ttk.Button(self, text="Plot Result",
                              command=plot_result)
