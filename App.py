@@ -1178,7 +1178,7 @@ class RIFPage(tk.Frame):
             self.myrifFilter.setTypef(self.FilterTypeCB.get())
             self.myrifFilter.setFs(266240)
             [w, h_df, h] = self.myrifFilter.getMyFilter()
-            self.plot(self.Filtre_F, w, h_df)
+            self.plot(self.Filtre_F, w[0:int(len(w)/2)], h_df[0:int(len(w)/2)])
         except:
             messagebox.showerror("error", "Please add all filter's info")
 
